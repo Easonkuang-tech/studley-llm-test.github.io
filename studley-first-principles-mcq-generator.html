@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studley • 第一性原理选择题生成器 v3.0</title>
+    
+    <!-- Tailwind CSS (Play CDN, pinned version) -->
+    <!-- This single-file demo uses the official Play CDN for zero-setup, full JIT support.
+         For a real production deployment, run the Tailwind CLI or PostCSS build instead. -->
+    <script>
+        // Suppress the known "cdn.tailwindcss.com should not be used in production" warning.
+        // This is intentional for a self-contained prototype. The app functions correctly.
+        (function() {
+            const origWarn = console.warn;
+            console.warn = function(...args) {
+                const msg = args[0];
+                if (typeof msg === 'string' && msg.includes('cdn.tailwindcss.com should not be used in production')) {
+                    return;
+                }
+                origWarn.apply(console, args);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#6366f1',
+                        accent: '#8b5cf6',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+                darkMode: 'class'
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto { content-visibility: auto; }
+            .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .transition-custom { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+            .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+            .card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+            .input-focus { @apply focus:ring-2 focus:ring-primary focus:border-primary transition-custom; }
+            .btn-primary { @apply bg-gradient-to-r from-primary to-secondary text-white font-medium py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-custom flex items-center justify-center; }
+            .btn-secondary { @apply bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium py-2 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-custom flex items-center justify-center; }
+            .step-badge { @apply text-xs px-2 py-1 rounded-full font-medium; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 min-h-screen font-sans text-gray-800 dark:text-gray-200 transition-colors duration-300">
+
+    <!-- ==================== LOGIN SECTION (Studley Style) ==================== -->
+    <div id="login-section" class="min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-md w-full">
+            <!-- Logo -->
+            <div class="text-center mb-10">
+                <div class="mx-auto w-20 h-20 bg-blue-600 rounded-3xl flex items-center justify-center text-5xl mb-4 shadow-lg">
+                    📚
+                </div>
+                <h1 class="text-5xl font-bold tracking-tight">Studley</h1>
+                <p class="text-gray-600 dark:text-gray-400 text-xl mt-2">用 AI 更聪明地学习</p>
+                <div class="mt-3 inline-flex items-center px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium">
+                    <i class="fa fa-magic mr-1.5"></i> 第一性原理引擎 v3.0
+                </div>
+            </div>
+
+            <!-- Login Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-8 border border-gray-100 dark:border-gray-700">
+                <h2 id="auth-title" class="text-2xl font-bold text-center mb-6">欢迎回来</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <input id="email-input" type="email" placeholder="你的邮箱地址" 
+                               class="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                    <div>
+                        <input id="password-input" type="password" placeholder="密码（至少6位）" 
+                               class="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                </div>
+
+                <button id="login-btn"
+                        class="mt-6 w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-all text-white py-4 rounded-2xl text-lg font-semibold flex items-center justify-center shadow-lg">
+                    <i class="fa fa-sign-in mr-2"></i> 登录并进入学习工具
+                </button>
+
+                <div class="flex items-center my-5">
+                    <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
+                    <span class="px-3 text-xs text-gray-400">或</span>
+                    <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
+                </div>
+
+                <button id="demo-btn"
+                        class="w-full border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all text-gray-700 dark:text-gray-300 py-3.5 rounded-2xl text-sm font-medium flex items-center justify-center">
+                    <i class="fa fa-rocket mr-2"></i> 直接体验 Demo（无需登录）
+                </button>
+
+                <p class="text-center mt-6 text-sm text-gray-600 dark:text-gray-400">
+                    还没有账号？ 
+                    <span id="switch-auth-mode" class="text-blue-600 dark:text-blue-400 cursor-pointer font-medium hover:underline">立即注册</span>
+                </p>
+            </div>
+
+            <p class="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">© 2026 Studley • 第一性原理知识内化工具</p>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN APP SECTION ==================== -->
+    <div id="main-app" class="hidden">
+        <!-- 导航栏 -->
+        <nav class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all duration-300">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16 items-center">
+                    <div class="flex items-center">
+                        <div class="flex items-center">
+                            <div class="w-9 h-9 bg-blue-600 rounded-2xl flex items-center justify-center text-white text-2xl mr-3">📚</div>
+                            <div>
+                                <span class="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Studley</span>
+                                <span class="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded-full align-middle">第一性原理 v3.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <!-- User info -->
+                        <div class="hidden sm:flex items-center bg-gray-100 dark:bg-gray-700 rounded-full pl-1 pr-4 py-1 text-sm">
+                            <div class="w-7 h-7 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white text-xs mr-2">柳</div>
+                            <span class="font-medium text-gray-700 dark:text-gray-200">柳宁</span>
+                        </div>
+                        
+                        <button id="theme-toggle" class="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-custom" title="切换主题">
+                            <i class="fa fa-moon-o text-gray-600 dark:text-gray-300"></i>
+                        </button>
+                        <button id="help-btn" class="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-custom" title="使用说明">
+                            <i class="fa fa-question-circle text-gray-600 dark:text-gray-300"></i>
+                        </button>
+                        <button id="logout-btn" class="px-3 py-1.5 text-xs rounded-full border border-gray-300 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-500 hover:text-red-500 transition-custom flex items-center" title="退出登录">
+                            <i class="fa fa-sign-out mr-1"></i> <span class="hidden sm:inline">退出</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- 介绍卡片 -->
+            <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-7 mb-8 card-hover border border-gray-100 dark:border-gray-700">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                    <div>
+                        <h2 class="text-2xl font-bold text-dark dark:text-white">基于第一性原理 + 四步公式的智能选择题生成</h2>
+                        <p class="text-gray-600 dark:text-gray-300 mt-1.5 max-w-2xl">上传任意材料（笔记、文章、书摘），系统将严格按照「二元转折 → 行为分化 → 因果推演 → 本质升维」四步公式，生成高质量深度理解型选择题。</p>
+                    </div>
+                    <div class="shrink-0">
+                        <button id="load-demo-btn" class="btn-secondary text-sm px-4 py-2">
+                            <i class="fa fa-lightbulb-o mr-2"></i>加载示例材料
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 四步骤小卡片 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-2">
+                    <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-2xl border border-blue-100 dark:border-blue-800/50">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-2">1</span>
+                            <h3 class="font-semibold text-primary">二元转折</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">锚定核心概念的正确基准状态与错误偏差状态</p>
+                    </div>
+                    <div class="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800/50">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-indigo-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-2">2</span>
+                            <h3 class="font-semibold text-indigo-500">行为分化</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">不同判断标准对应的具体可落地动作差异</p>
+                    </div>
+                    <div class="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-2xl border border-purple-100 dark:border-purple-800/50">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-purple-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-2">3</span>
+                            <h3 class="font-semibold text-purple-500">因果推演</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">错误行为导致的环环相扣必然结果链</p>
+                    </div>
+                    <div class="bg-violet-50 dark:bg-violet-900/30 p-4 rounded-2xl border border-violet-100 dark:border-violet-800/50">
+                        <div class="flex items-center mb-2">
+                            <span class="bg-violet-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold mr-2">4</span>
+                            <h3 class="font-semibold text-violet-500">本质升维</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">从表象结果升维到系统模型的本质区别</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 输入区域 + 生成设置 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- 输入 -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-7 card-hover border border-gray-100 dark:border-gray-700">
+                        <h3 class="text-xl font-bold mb-4 flex items-center">
+                            <i class="fa fa-file-text-o text-primary mr-3"></i>
+                            输入原始材料
+                        </h3>
+                        
+                        <div class="mb-4">
+                            <label for="text-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                粘贴笔记、文章、书摘或PDF内容（推荐 300-2000 字）
+                            </label>
+                            <textarea id="text-input" rows="13" class="w-full px-5 py-4 border border-gray-300 dark:border-gray-600 rounded-2xl input-focus dark:bg-gray-700 dark:text-white resize-y text-sm leading-relaxed" 
+                                      placeholder="例如：真正的生意的核心前提在于收入是否由自己控制...&#10;或粘贴任何你想深度内化的材料"></textarea>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">或上传文本文件</label>
+                            <div class="flex items-center justify-center w-full">
+                                <label for="file-upload" class="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl cursor-pointer bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-custom">
+                                    <div class="flex flex-col items-center justify-center pt-4 pb-4">
+                                        <i class="fa fa-cloud-upload text-3xl text-gray-400 mb-2"></i>
+                                        <p class="mb-0.5 text-sm text-gray-600 dark:text-gray-300"><span class="font-semibold">点击上传</span> 或拖放文件</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">支持 .txt .md .docx</p>
+                                    </div>
+                                    <input id="file-upload" type="file" class="hidden" accept=".txt,.md,.docx" />
+                                </label>
+                            </div>
+                            <p id="file-name" class="mt-2 text-sm text-primary font-medium hidden"></p>
+                        </div>
+                        
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button id="generate-btn" class="flex-1 btn-primary py-3.5 text-base font-semibold">
+                                <i class="fa fa-magic mr-2"></i>使用第一性原理 + 四步公式生成选择题
+                            </button>
+                            <button id="clear-btn" class="flex-1 btn-secondary py-3.5">
+                                <i class="fa fa-trash-o mr-2"></i>清空输入
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 设置 -->
+                <div>
+                    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-7 card-hover border border-gray-100 dark:border-gray-700 sticky top-20">
+                        <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fa fa-sliders text-primary mr-3"></i>生成设置</h3>
+                        <div class="space-y-5">
+                            <div>
+                                <label for="question-count" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">题目数量（推荐 4 道，一题对应一步）</label>
+                                <div class="flex items-center gap-3">
+                                    <input type="number" id="question-count" min="2" max="8" value="4" 
+                                           class="w-24 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl input-focus dark:bg-gray-700 dark:text-white text-center font-mono">
+                                    <span class="text-xs text-gray-500">道</span>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800/60 p-4 rounded-2xl text-xs leading-relaxed text-gray-600 dark:text-gray-300">
+                                系统将严格按「四步公式」分层生成：<br>
+                                <span class="font-medium text-primary">Step1</span> 二元转折锚定 → <span class="font-medium text-indigo-500">Step2</span> 行为分化 → <span class="font-medium text-purple-500">Step3</span> 因果推演 → <span class="font-medium text-violet-500">Step4</span> 本质升维
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 结果展示区域 -->
+            <div id="results-section" class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-7 mt-8 card-hover border border-gray-100 dark:border-gray-700 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold flex items-center"><i class="fa fa-list-alt text-primary mr-3"></i>开始答题（提交后查看答案与解析）</h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">全部做完后点击「提交答卷」查看分数 + 正确答案 + 深度解析</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="submit-btn" class="bg-success hover:bg-emerald-600 transition-all text-white font-semibold py-2.5 px-6 rounded-2xl flex items-center text-sm shadow-sm hidden">
+                            <i class="fa fa-check-circle mr-2"></i>提交答卷
+                        </button>
+                        <button id="copy-all-btn" class="btn-secondary text-sm px-4 py-2.5">
+                            <i class="fa fa-copy mr-2"></i>复制全部
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="score-section" class="hidden bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 p-5 rounded-2xl mb-6 text-center">
+                    <div class="flex items-center justify-center gap-3">
+                        <i class="fa fa-tachometer text-emerald-500 text-3xl"></i>
+                        <div>
+                            <h2 class="text-3xl font-bold text-emerald-600 dark:text-emerald-400" id="score-text">得分：0/0</h2>
+                            <p class="text-sm text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">提交后系统会高亮正确答案并给出详细解析</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="questions-container" class="space-y-6"></div>
+            </div>
+        </main>
+        
+        <footer class="max-w-7xl mx-auto px-4 pb-8 text-center text-xs text-gray-400 dark:text-gray-500">
+            Studley 第一性原理引擎 • 严格遵循四步公式 • 仅供学习与内化使用
+        </footer>
+    </div>
+
+    <!-- 帮助模态框 -->
+    <div id="help-modal" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-2xl w-full p-7">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-xl font-bold flex items-center"><i class="fa fa-question-circle text-primary mr-3"></i>使用说明（第一性原理模式）</h3>
+                <button id="close-help" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="text-sm text-gray-600 dark:text-gray-300 space-y-3 leading-relaxed">
+                <p><strong>1.</strong> 粘贴任意材料（笔记、书摘、文章、PDF 文本）</p>
+                <p><strong>2.</strong> 点击「使用第一性原理 + 四步公式生成选择题」</p>
+                <p><strong>3.</strong> 系统自动提取核心概念，严格按照四步公式生成 2-8 道高质量题（推荐 4 道）</p>
+                <p><strong>4.</strong> 全部做完后点击「提交答卷」查看分数 + 正确答案 + 深度解析</p>
+                <div class="pt-3 border-t border-gray-200 dark:border-gray-700 text-primary text-xs font-medium">
+                    本版本严格参考 Studley AI 风格，强调深度理解、精准考点、常见误区干扰项、提交后才显示答案与解析。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载动画 -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white/90 dark:bg-gray-900/90 z-[70] flex items-center justify-center hidden">
+        <div class="text-center px-6">
+            <div class="inline-block animate-spin rounded-full h-14 w-14 border-t-4 border-b-4 border-primary mb-5"></div>
+            <p class="text-lg font-semibold">正在使用第一性原理 + 四步公式深度分析材料...</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xs mx-auto">提取核心概念 → 构建二元转折 → 行为分化 → 因果链 → 本质模型</p>
+        </div>
+    </div>
+
+    <script>
+        // ==================== DOM & 全局状态 ====================
+        const loginSection = document.getElementById('login-section');
+        const mainApp = document.getElementById('main-app');
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const loginBtn = document.getElementById('login-btn');
+        const demoBtn = document.getElementById('demo-btn');
+        const switchAuthMode = document.getElementById('switch-auth-mode');
+        const authTitle = document.getElementById('auth-title');
+
+        const textInput = document.getElementById('text-input');
+        const fileUpload = document.getElementById('file-upload');
+        const fileNameEl = document.getElementById('file-name');
+        const generateBtn = document.getElementById('generate-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const loadDemoBtn = document.getElementById('load-demo-btn');
+        const resultsSection = document.getElementById('results-section');
+        const questionsContainer = document.getElementById('questions-container');
+        const copyAllBtn = document.getElementById('copy-all-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const helpModal = document.getElementById('help-modal');
+        const closeHelp = document.getElementById('close-help');
+        const themeToggle = document.getElementById('theme-toggle');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const questionCount = document.getElementById('question-count');
+        const submitBtn = document.getElementById('submit-btn');
+        const scoreSection = document.getElementById('score-section');
+        const scoreText = document.getElementById('score-text');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        let generatedQuestions = [];
+        let userAnswers = {};
+        let isSubmitted = false;
+        let isRegisterMode = false;
+
+        // ==================== 登录 / 注册 / Demo 逻辑 ====================
+        function showMainApp() {
+            loginSection.style.transition = 'opacity 0.3s ease';
+            loginSection.style.opacity = '0';
+            setTimeout(() => {
+                loginSection.classList.add('hidden');
+                mainApp.classList.remove('hidden');
+                mainApp.style.opacity = '0';
+                mainApp.style.transition = 'opacity 0.4s ease';
+                requestAnimationFrame(() => {
+                    mainApp.style.opacity = '1';
+                });
+            }, 280);
+        }
+
+        loginBtn.addEventListener('click', () => {
+            const email = emailInput.value.trim();
+            const pw = passwordInput.value.trim();
+            
+            if (!email || pw.length < 6) {
+                // Demo friendly validation
+                if (!email) emailInput.placeholder = '请输入邮箱（Demo可随意填写）';
+                if (pw.length < 6) passwordInput.placeholder = '密码至少6位（Demo可随意填写）';
+                // Allow demo anyway after gentle reminder
+                setTimeout(() => {
+                    if (confirm('Demo 模式下可直接进入。是否继续？')) {
+                        showMainApp();
+                    }
+                }, 800);
+                return;
+            }
+            showMainApp();
+        });
+
+        demoBtn.addEventListener('click', () => {
+            showMainApp();
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            if (confirm('确定要退出登录吗？')) {
+                mainApp.style.transition = 'opacity 0.25s ease';
+                mainApp.style.opacity = '0';
+                setTimeout(() => {
+                    mainApp.classList.add('hidden');
+                    loginSection.classList.remove('hidden');
+                    loginSection.style.opacity = '1';
+                    // reset form
+                    emailInput.value = '';
+                    passwordInput.value = '';
+                    authTitle.textContent = '欢迎回来';
+                    isRegisterMode = false;
+                    switchAuthMode.textContent = '立即注册';
+                }, 220);
+            }
+        });
+
+        // 切换登录/注册模式（纯前端 Demo）
+        switchAuthMode.addEventListener('click', () => {
+            isRegisterMode = !isRegisterMode;
+            if (isRegisterMode) {
+                authTitle.textContent = '创建新账号';
+                loginBtn.innerHTML = '<i class="fa fa-user-plus mr-2"></i>注册并进入工具';
+                switchAuthMode.textContent = '已有账号？去登录';
+            } else {
+                authTitle.textContent = '欢迎回来';
+                loginBtn.innerHTML = '<i class="fa fa-sign-in mr-2"></i>登录并进入学习工具';
+                switchAuthMode.textContent = '立即注册';
+            }
+        });
+
+        // ==================== 主题切换 ====================
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            themeToggle.innerHTML = isDark 
+                ? '<i class="fa fa-sun-o text-yellow-400"></i>' 
+                : '<i class="fa fa-moon-o text-gray-600"></i>';
+            localStorage.setItem('studley-theme', isDark ? 'dark' : 'light');
+        });
+
+        // 恢复主题
+        (function initTheme() {
+            if (localStorage.getItem('studley-theme') === 'dark' || 
+                (!localStorage.getItem('studley-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                themeToggle.innerHTML = '<i class="fa fa-sun-o text-yellow-400"></i>';
+            }
+        })();
+
+        // ==================== 帮助模态 ====================
+        helpBtn.addEventListener('click', () => helpModal.classList.remove('hidden'));
+        closeHelp.addEventListener('click', () => helpModal.classList.add('hidden'));
+        helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.classList.add('hidden'); });
+
+        // ==================== 文件上传 ====================
+        fileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileNameEl.textContent = `已选择文件: ${file.name}`;
+                fileNameEl.classList.remove('hidden');
+                const reader = new FileReader();
+                reader.onload = (ev) => { textInput.value = ev.target.result; };
+                reader.readAsText(file);
+            }
+        });
+
+        // ==================== 清空 ====================
+        clearBtn.addEventListener('click', () => {
+            textInput.value = '';
+            fileUpload.value = '';
+            fileNameEl.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            questionsContainer.innerHTML = '';
+            generatedQuestions = [];
+            userAnswers = {};
+            isSubmitted = false;
+            submitBtn.classList.add('hidden');
+            scoreSection.classList.add('hidden');
+        });
+
+        // ==================== 加载示例材料 ====================
+        loadDemoBtn.addEventListener('click', () => {
+            const demoText = `真正的生意的核心前提在于收入是否由自己控制。\n\n当收入完全依赖平台规则、公司职位或他人决策时，你就处于被动状态。一旦对方改变规则、裁员或终止合作，你就会瞬间失去所有收入来源。\n\n正确的做法是：不再把核心收入建立在外部不可控因素上，而是开始建立自己可控的产品、客户和品牌。搭建属于自己的流量渠道、产品矩阵和客户关系。\n\n如果持续依赖别人提供流量和规则，短期内收入可能看起来稳定，但长期来看，业务稳定性会越来越弱，最终因为对方一次规则改变或市场环境变化而彻底失去全部掌控。`;
+            textInput.value = demoText;
+            fileNameEl.classList.add('hidden');
+            // 自动滚动到输入区
+            textInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        // ==================== 核心分析引擎（严格四步公式版） ====================
+        function analyzeMaterial(text) {
+            const cleanText = text.replace(/\s+/g, ' ').trim();
+            const sentences = cleanText.split(/[。！？；\n]+/).filter(s => s.trim().length > 8);
+
+            // 关键词加权提取核心概念
+            const coreKeywords = ['核心', '本质', '前提', '标准', '判断', '转折', '控制', '依赖', '可控', '依附', '结构', '模型', '系统', '收入', '生意', '业务'];
+            let scored = sentences.map((s, idx) => {
+                let score = s.length / 12;
+                coreKeywords.forEach(kw => { if (s.includes(kw)) score += 9; });
+                if (idx < 4) score += 6;
+                if (s.length > 60 && s.length < 180) score += 4; // 适中长度优先
+                return { text: s.trim(), score };
+            });
+            scored.sort((a, b) => b.score - a.score);
+
+            const coreConceptRaw = scored[0]?.text || "材料核心概念";
+            // 提取更精炼的核心概念（取前35字左右）
+            const coreConcept = coreConceptRaw.length > 42 ? coreConceptRaw.substring(0, 42) + "..." : coreConceptRaw;
+
+            // 尝试找到正确/错误状态描述
+            const correctState = scored.find(s => 
+                (s.text.includes('正确') || s.text.includes('应该') || s.text.includes('可控') || s.text.includes('自己控制') || s.text.includes('建立') || s.text.includes('搭建'))
+            )?.text || `符合材料核心要求的正确基准状态（${coreConcept}）`;
+
+            const wrongState = scored.find(s => 
+                (s.text.includes('错误') || s.text.includes('依赖') || s.text.includes('外部') || s.text.includes('平台') || s.text.includes('别人') || s.text.includes('不可控'))
+            )?.text || `违背材料核心要求的错误偏差状态（依赖外部/表象）`;
+
+            // 行为
+            const correctAction = scored.find(s => 
+                s.text.includes('建立') || s.text.includes('搭建') || s.text.includes('自己') || s.text.includes('可控')
+            )?.text || `基于正确标准，落地与材料核心强绑定的具体动作（建立自己可控的产品与客户体系）`;
+
+            const wrongAction = scored.find(s => 
+                s.text.includes('依赖') || s.text.includes('不要') || s.text.includes('避免')
+            )?.text || `基于错误标准，持续坚持依赖外部不可控因素的无效动作`;
+
+            // 因果
+            const consequence1 = scored.find(s => s.text.includes('导致') || s.text.includes('造成') || s.text.includes('稳定性'))?.text 
+                || `第一层直接后果：业务稳定性越来越弱`;
+            const consequence2 = `第二层连锁后果：${coreConcept}的可持续性完全丧失`;
+            const finalResult = `终极不可逆结果：因外部规则/环境变化而彻底失去对${coreConcept}的掌控`;
+
+            // 本质
+            const essenceCorrect = `从底层系统逻辑来看，材料的核心本质是从「依附/失控型系统模型」转变为「可控/闭环型系统模型」`;
+            const essenceWrong = `错误理解停留在表象结果或单一能力层面，未触达系统模型`;
+
+            return {
+                coreConcept,
+                correctState: correctState.substring(0, 68),
+                wrongState: wrongState.substring(0, 68),
+                correctAction: correctAction.substring(0, 62),
+                wrongAction: wrongAction.substring(0, 62),
+                consequence1: consequence1.substring(0, 55),
+                consequence2,
+                finalResult,
+                essenceCorrect: essenceCorrect.substring(0, 78),
+                essenceWrong: essenceWrong.substring(0, 55),
+                keySentences: scored.slice(0, 6).map(s => s.text)
+            };
+        }
+
+        // ==================== 生成题目（严格贴合四步公式） ====================
+        function generateQuestions(text) {
+            const analysis = analyzeMaterial(text);
+            const count = Math.min(8, Math.max(2, parseInt(questionCount.value) || 4));
+
+            generatedQuestions = [];
+            userAnswers = {};
+            isSubmitted = false;
+            scoreSection.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+
+            if (count >= 1) generatedQuestions.push(buildStep1Question(analysis));
+            if (count >= 2) generatedQuestions.push(buildStep2Question(analysis));
+            if (count >= 3) generatedQuestions.push(buildStep3Question(analysis));
+            if (count >= 4) generatedQuestions.push(buildStep4Question(analysis));
+
+            // 如果用户要更多题，补充一些高质量干扰题（但保持前4道严格对应四步）
+            for (let i = 5; i <= count; i++) {
+                generatedQuestions.push(buildExtraQuestion(analysis, i));
+            }
+
+            renderQuestions();
+            resultsSection.classList.remove('hidden');
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function buildStep1Question(analysis) {
+            const opts = [
+                analysis.correctState,
+                analysis.wrongState,
+                `一种静态的、仅关注当下数量或规模的表象描述`,
+                `一种个人能力或努力程度层面的成长瓶颈`
+            ];
+            const shuffled = shuffle([...opts]);
+            return {
+                id: 1,
+                step: 1,
+                stepName: "二元转折·概念锚定",
+                question: `根据你输入的材料，以下哪一项是「${analysis.coreConcept}」的正确判断标准？`,
+                options: shuffled,
+                correctIndex: shuffled.indexOf(analysis.correctState),
+                explanation: `核心考点（Step1）：必须严格锚定材料中「正确基准状态」与「错误偏差状态」的二元转折。选错通常是因为只看表象结果或把命题偷换成个人成长叙事。`
+            };
+        }
+
+        function buildStep2Question(analysis) {
+            const opts = [
+                analysis.correctAction,
+                analysis.wrongAction,
+                `持续提升个人专业能力与执行力，争取外部认可与资源`,
+                `严格控制消费、提高储蓄率，积累更多现金储备`
+            ];
+            const shuffled = shuffle([...opts]);
+            return {
+                id: 2,
+                step: 2,
+                stepName: "行为分化·动作匹配",
+                question: `基于材料中「${analysis.coreConcept}」的正确判断标准，以下哪项是真正能落地的核心动作？`,
+                options: shuffled,
+                correctIndex: shuffled.indexOf(analysis.correctAction),
+                explanation: `核心考点（Step2）：动作必须与 Step1 的正确标准 100% 强绑定。只看结果或只提升个人能力都是常见偏差。`
+            };
+        }
+
+        function buildStep3Question(analysis) {
+            const correctChain = `${analysis.consequence1}，进而 ${analysis.consequence2}，最终 ${analysis.finalResult}`;
+            const opts = [
+                correctChain,
+                `短期内收入可能上升，但长期会因为外部环境变化而失去全部掌控`,
+                `通过持续学习和努力，最终能突破个人收入上限`,
+                `只要保持高储蓄率和良好消费习惯，就能完全规避风险`
+            ];
+            const shuffled = shuffle([...opts]);
+            return {
+                id: 3,
+                step: 3,
+                stepName: "因果推演·闭环风险",
+                question: `如果持续坚持材料中描述的错误行为，以下哪条因果链最准确？`,
+                options: shuffled,
+                correctIndex: shuffled.indexOf(correctChain),
+                explanation: `核心考点（Step3）：必须是环环相扣的必然因果链，且所有后果都紧扣材料核心概念。跳步或加入无关因素都是常见错误。`
+            };
+        }
+
+        function buildStep4Question(analysis) {
+            const opts = [
+                analysis.essenceCorrect,
+                analysis.essenceWrong,
+                `持续提升个人赚钱能力和收入规模，就能彻底解决`,
+                `拥有足够多的资产和现金储备，就能应对所有风险`
+            ];
+            const shuffled = shuffle([...opts]);
+            return {
+                id: 4,
+                step: 4,
+                stepName: "本质升维·系统模型",
+                question: `从底层系统逻辑来看，材料中「${analysis.coreConcept}」的本质区别在于？`,
+                options: shuffled,
+                correctIndex: shuffled.indexOf(analysis.essenceCorrect),
+                explanation: `核心考点（Step4）：必须升维到「系统模型」层面（可控/闭环 vs 依附/失控），而非停留在表象结果或单一能力。`
+            };
+        }
+
+        function buildExtraQuestion(analysis, id) {
+            // 额外题作为高质量干扰，保持风格一致但不严格对应四步
+            const opts = [
+                `材料中提到的所有方法都应该被严格执行`,
+                `核心问题其实是个人执行力不足`,
+                `只要多学习相关知识就能自然解决`,
+                `外部环境变化对材料核心概念影响很小`
+            ];
+            const shuffled = shuffle([...opts]);
+            return {
+                id: id,
+                step: 0,
+                stepName: "综合理解·干扰项",
+                question: `关于你输入的材料，以下说法最准确的是？`,
+                options: shuffled,
+                correctIndex: 0,
+                explanation: `这是一道综合理解题，主要考察你是否真正抓住了材料的核心逻辑而非表面信息。`
+            };
+        }
+
+        // ==================== 渲染题目 ====================
+        function renderQuestions() {
+            questionsContainer.innerHTML = '';
+            const labels = ['A', 'B', 'C', 'D'];
+
+            generatedQuestions.forEach(q => {
+                const div = document.createElement('div');
+                div.className = `border border-gray-200 dark:border-gray-700 rounded-2xl p-6 dark:bg-gray-700/60 ${q.step > 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-800/40'}`;
+                
+                let html = `
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            ${q.step > 0 ? 
+                                `<span class="step-badge bg-primary/10 text-primary">Step ${q.step}</span>` : 
+                                `<span class="step-badge bg-gray-200 dark:bg-gray-600 text-gray-500">综合</span>`}
+                            <span class="step-badge bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300">${q.stepName}</span>
+                        </div>
+                        <span class="text-xs text-gray-400 font-mono">第 ${q.id} 题</span>
+                    </div>
+                    
+                    <h4 class="text-[15.5px] font-semibold leading-snug mb-4 text-gray-800 dark:text-gray-100">${q.question}</h4>
+                    <div class="space-y-2.5 mb-1">`;
+
+                q.options.forEach((opt, i) => {
+                    let cls = `p-3.5 border rounded-2xl cursor-pointer transition-all text-sm leading-snug flex items-start gap-3 ${!isSubmitted ? 'hover:border-primary/60 hover:bg-blue-50/60 dark:hover:bg-gray-600' : ''}`;
+                    
+                    if (!isSubmitted) {
+                        cls += userAnswers[q.id] === i ? ' bg-blue-100 dark:bg-blue-900/40 border-blue-400' : ' border-gray-200 dark:border-gray-600';
+                    } else {
+                        if (i === q.correctIndex) {
+                            cls += ' bg-emerald-100 dark:bg-emerald-900/40 border-emerald-400';
+                        } else if (userAnswers[q.id] === i) {
+                            cls += ' bg-red-100 dark:bg-red-900/40 border-red-400';
+                        } else {
+                            cls += ' bg-gray-100 dark:bg-gray-700 border-gray-200 dark:border-gray-600';
+                        }
+                    }
+                    
+                    html += `<div class="${cls}" onclick="selectAnswer(${q.id}, ${i})">
+                        <div class="font-mono text-xs mt-0.5 w-5 text-gray-400">${labels[i]}.</div>
+                        <div class="flex-1">${opt}</div>
+                    </div>`;
+                });
+
+                html += `</div>`;
+                
+                if (isSubmitted) {
+                    html += `<div class="mt-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-2xl p-4 text-sm">
+                        <div class="font-semibold text-blue-600 dark:text-blue-400 mb-1 flex items-center"><i class="fa fa-lightbulb-o mr-2"></i>解析</div>
+                        ${q.explanation}
+                    </div>`;
+                }
+                
+                div.innerHTML = html;
+                questionsContainer.appendChild(div);
+            });
+        }
+
+        window.selectAnswer = (qid, idx) => {
+            if (isSubmitted) return;
+            userAnswers[qid] = idx;
+            renderQuestions();
+        };
+
+        // ==================== 提交打分 ====================
+        submitBtn.addEventListener('click', () => {
+            isSubmitted = true;
+            submitBtn.classList.add('hidden');
+            
+            let correct = 0;
+            generatedQuestions.forEach(q => {
+                if (userAnswers[q.id] === q.correctIndex) correct++;
+            });
+            
+            const total = generatedQuestions.length;
+            scoreText.textContent = `得分：${correct}/${total}（满分 ${total}）`;
+            scoreSection.classList.remove('hidden');
+            renderQuestions();
+            
+            // 轻微庆祝
+            if (correct === total) {
+                setTimeout(() => {
+                    scoreSection.style.transition = 'all 0.4s ease';
+                    scoreSection.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.3)';
+                    setTimeout(() => scoreSection.style.boxShadow = '', 1200);
+                }, 300);
+            }
+        });
+
+      // ==================== 生成按钮（支持 LLM） ====================
+generateBtn.addEventListener('click', async () => {
+  const text = textInput.value.trim();
+  if (!text || text.length < 25) {
+    alert('请输入至少25字的材料内容');
+    return;
+  }
+
+  const useLLM = confirm('是否使用 DeepSeek LLM 生成？\n\n点击「确定」= 使用 LLM（推荐）\n点击「取消」= 使用本地规则');
+
+  if (!useLLM) {
+    // 使用本地规则
+    loadingOverlay.classList.remove('hidden');
+    setTimeout(() => {
+      generateQuestions(text);
+      loadingOverlay.classList.add('hidden');
+    }, 800);
+    return;
+  }
+
+  // 使用 DeepSeek LLM
+  loadingOverlay.classList.remove('hidden');
+  try {
+    const res = await fetch('http://localhost:3001/api/generate-questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        material: text,
+        questionCount: parseInt(questionCount.value) || 4
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'LLM 调用失败');
+    }
+
+    const data = await res.json();
+    generatedQuestions = data.questions;
+    userAnswers = {};
+    isSubmitted = false;
+    scoreSection.classList.add('hidden');
+    submitBtn.classList.remove('hidden');
+
+    renderQuestions();
+    resultsSection.classList.remove('hidden');
+    resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+  } catch (err) {
+    alert('LLM 调用失败：' + err.message + '\n\n请确认代理服务器是否还在运行？');
+  } finally {
+    loadingOverlay.classList.add('hidden');
+  }
+});
+        // ==================== 复制全部 ====================
+        copyAllBtn.addEventListener('click', async () => {
+            let txt = 'Studley 第一性原理四步公式选择题（v3.0）\n\n';
+            generatedQuestions.forEach(q => {
+                txt += `【Step${q.step || '综合'}】第${q.id}题：${q.question}\n`;
+                q.options.forEach((o, i) => txt += `${String.fromCharCode(65 + i)}. ${o}\n`);
+                txt += `正确答案：${String.fromCharCode(65 + q.correctIndex)}\n解析：${q.explanation}\n\n`;
+            });
+            await navigator.clipboard.writeText(txt);
+            const original = copyAllBtn.innerHTML;
+            copyAllBtn.innerHTML = '<i class="fa fa-check mr-2"></i>已复制到剪贴板';
+            setTimeout(() => { copyAllBtn.innerHTML = original; }, 2200);
+        });
+
+        // ==================== 工具函数 ====================
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // ==================== 初始化提示 ====================
+        console.log('%c[Studley] 第一性原理选择题生成器 v3.0 已加载 | 严格四步公式引擎就绪', 'color:#3b82f6');
+        
+        // 键盘快捷键提示（可选增强）
+        document.addEventListener('keydown', (e) => {
+            if (e.metaKey && e.key === 'Enter' && !resultsSection.classList.contains('hidden')) {
+                if (!isSubmitted) submitBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
